@@ -642,6 +642,17 @@ class VoiceLLMChatBackend:
         self.active_streamer = None
         self.lock = threading.Lock() # Lock for thread-safe access to shared resources
 
+
+    def set_model_parameters(self, temperature=0.1, max_tokens = 256, top_k = 100, top_p = 1, locale="en"):
+        """Sets model parameters for generation."""
+        self.model_temperature = temperature
+        self.model_top_k = top_k
+        self.model_top_p = top_p
+        self.model_max_new_tokens = max_tokens
+        self.locale = locale
+        # self.model_repetition_penalty = repetition_penalty
+        # self.model_max_new_tokens = max_new_tokens
+
     def start(self):
         """Starts backend threads and initializes a new chat."""
         if not self.initialized:
@@ -870,16 +881,18 @@ class VoiceLLMChatBackend:
                 self.display_queue.put((f"model_inputs: {model_inputs}", ""))
 
                 generation_kwargs = {
-                    "input_ids": model_inputs.input_ids,
-                    "attention_mask": model_inputs.attention_mask,
+                    "input_ids": model_inputs["input_ids"],
+                    "attention_mask": model_inputs["attention_mask"],
                     "streamer": streamer,
                     "stopping_criteria": stopping_criteria,
-                    "max_new_tokens": 256,
-                    "do_sample": True,
-                    "temperature": 0.7,
-                    "top_p": 0.9,
-                    "num_return_sequences": 1,
-                    "repetition_penalty": 1.1
+                    "max_new_tokens": self.model_max_new_tokens,
+                    "do_sample": True if self.model_temperature else False,
+                    "temperature": self.model_temperature,
+                    "top_k": self.model_top_k,
+                    "top_p": self.model_top_p,
+                    # "repetition_penalty": repetition_penalty
+                    # "num_return_sequences": 1,
+                    # "repetition_penalty": 1.1
                 }
 
                 input_ids_sizes = [len(input_ids) for input_ids in model_inputs.input_ids]
@@ -966,7 +979,7 @@ class VoiceLLMChatBackend:
     def _process_stream(self, streamer: TextIteratorStreamer):
         """Processes streamed tokens into TTS chunks."""
         print("Starting stream processing...")
-        tts = TTSBuffer(max_tokens=12)
+        tts = TTSBuffer(max_tokens=12, locale=self.locale)
         try:
             for token_text in streamer:
                 if self.stop_event.is_set():
