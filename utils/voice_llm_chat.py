@@ -11,7 +11,7 @@ from typing import Optional, Set, List, Dict
 
 import ffmpeg
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, StoppingCriteria, StoppingCriteriaList, TextIteratorStreamer
+from transformers import StoppingCriteria, StoppingCriteriaList, TextIteratorStreamer
 from scipy.io.wavfile import read, write
 
 # Dictionary of common abbreviations and their expansions for TTS.
@@ -1082,7 +1082,7 @@ class VoiceLLMChatBackend:
 
     def _decode_audio(self, data: str) -> Optional[bytes]:
         """Decodes base64 audio and prepares it for VOSK using ffmpeg."""
-        if data is not None and isinstance(data, str) and data.startswith("data:audio/wav;base64,"):
+        if data is not None and isinstance(data, str):
             try:
                 binary = b64decode(data)
             except:
@@ -1112,14 +1112,12 @@ class VoiceLLMChatBackend:
 
         if audio is not None:
             try:
-                if self.speech_recognizer.AcceptWaveform(audio):
-                    result = json.loads(self.speech_recognizer.FinalResult())
-                    recognized_text = result.get("text", "")
-                    if recognized_text:
-                        transcription = recognized_text.capitalize()
-                        print(f"Transcription successful: '{transcription}'")
-                else:
-                    pass
+                self.speech_recognizer.AcceptWaveform(audio)
+                result = json.loads(self.speech_recognizer.FinalResult())
+                recognized_text = result.get("text", "")
+                if recognized_text:
+                    transcription = recognized_text.capitalize()
+                    print(f"Transcription successful: '{transcription}'")
 
             except Exception as e:
                 print(f"Error during VOSK transcription: {e}")
