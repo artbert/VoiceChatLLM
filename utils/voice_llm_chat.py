@@ -602,7 +602,7 @@ class TTSBuffer:
         phrase_for_tts = phrase_for_tts.replace("*", "").replace("_", "").replace("#", "").replace('"', '')
 
         # Replacement of english abbrev with their expansions
-        phrase_for_tts = self.replace_common_abbreviations(phrase_for_tts)
+        phrase_for_tts = self._replace_common_abbreviations(phrase_for_tts)
         return (phrase_to_display, phrase_for_tts)
 
     def clear(self):
@@ -652,6 +652,9 @@ class VoiceLLMChatBackend:
         self.locale = locale
         # self.model_repetition_penalty = repetition_penalty
         # self.model_max_new_tokens = max_new_tokens
+
+    def set_system_message(self, system_message):
+        self.system_message = system_message
 
     def start(self):
         """Starts backend threads and initializes a new chat."""
@@ -828,7 +831,6 @@ class VoiceLLMChatBackend:
             print(f"Prepared prompt text: {text[:100]}...")
             model_inputs = self.tokenizer([text], return_tensors="pt")
             print("Model inputs tokenized.")
-            print(model_inputs)
 
             # Move inputs to GPU if available
             if torch.cuda.is_available():
@@ -877,8 +879,6 @@ class VoiceLLMChatBackend:
                 if model_inputs is None:
                     print("Model input preparation failed. Skipping prompt processing.")
                     continue
-
-                self.display_queue.put((f"model_inputs: {model_inputs}", ""))
 
                 generation_kwargs = {
                     "input_ids": model_inputs["input_ids"],
