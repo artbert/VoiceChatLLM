@@ -904,7 +904,7 @@ class VoiceLLMChatBackend:
                     # "repetition_penalty": 1.1
                 }
 
-                input_ids_sizes = [len(input_ids) for input_ids in model_inputs.input_ids]
+                input_ids_sizes = [len(input_ids) for input_ids in model_inputs["input_ids"]]
 
                 model_thread = threading.Thread(target=self._generate_response, args=(input_ids_sizes, generation_kwargs))
                 self.is_model_working = True
