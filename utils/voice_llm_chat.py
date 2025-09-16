@@ -633,6 +633,7 @@ class VoiceLLMChatBackend:
         self.chat_messages = []
         self.context_load = 0
         self.system_message = "You are a helpful voice assistant who responds in one or two short sentences. Respond without any formatting."
+        self.should_print_logs = False
 
         # Background threads
         self.model_processing_thread = None
@@ -644,6 +645,10 @@ class VoiceLLMChatBackend:
         self.active_streamer = None
         self.lock = threading.Lock() # Lock for thread-safe access to shared resources
 
+    def _print_logs(self, message):
+        """Print logs if enabled."""
+        if self.should_print_logs:
+            print(message)
 
     def set_model_parameters(self, temperature=0.1, max_tokens = 256, top_k = 100, top_p = 1, locale="en"):
         """Sets llm model parameters for generation."""
@@ -667,7 +672,7 @@ class VoiceLLMChatBackend:
 
         # Stop and restart if already running
         if self.model_processing_thread is not None and self.model_processing_thread.is_alive():
-            print("Application is already running. Stopping and restarting.")
+            self._print_logs("Application is already running. Stopping and restarting.")
             self.stop()
             time.sleep(0.5)
 
@@ -687,7 +692,7 @@ class VoiceLLMChatBackend:
 
         self.model_processing_thread.start()
         self.tts_processor_thread.start()
-        print("The application started.")
+        self._print_logs("The application started.")
 
     def stop(self):
         """Signals threads to stop and waits for them."""
@@ -695,7 +700,7 @@ class VoiceLLMChatBackend:
             print("Application is not running.")
             return
 
-        print("Stopping application...")
+        self._print_logs("Stopping application...")
         self.is_running = False
         self.stop_event.set()
         self.prompt_queue.put(None) # Unblock model worker's get()
@@ -703,17 +708,17 @@ class VoiceLLMChatBackend:
         timeout_seconds = 5
 
         if self.model_processing_thread is not None and self.model_processing_thread.is_alive():
-            print("Waiting for model worker to stop...")
+            self._print_logs("Waiting for model worker to stop...")
             self.model_processing_thread.join(timeout=timeout_seconds)
             if self.model_processing_thread.is_alive():
-                 print("Warning: Model worker thread did not join gracefully within timeout.")
+                self._print_logs("Warning: Model worker thread did not join gracefully within timeout.")
             self.model_processing_thread = None
 
         if self.tts_processor_thread is not None and self.tts_processor_thread.is_alive():
-            print("Waiting for TTS processor to stop...")
+            self._print_logs("Waiting for TTS processor to stop...")
             self.tts_processor_thread.join(timeout=timeout_seconds)
             if self.tts_processor_thread.is_alive():
-                print("Warning: TTS processor thread did not join gracefully within timeout.")
+                self._print_logs("Warning: TTS processor thread did not join gracefully within timeout.")
             self.tts_processor_thread = None
 
         print("The application stopped.")
@@ -721,10 +726,10 @@ class VoiceLLMChatBackend:
     def interrupt_response(self):
         """Interrupts current model response and TTS."""
         if not self.is_model_working and self.tts_queue.empty() and self.display_queue.empty():
-             print("No active response to interrupt.")
-             return
+            self._print_logs("No active response to interrupt.")
+            return
 
-        print("Interrupting response...")
+        self._print_logs("Interrupting response...")
         self.stop_event.set()
 
         wait_time = 0
@@ -732,14 +737,14 @@ class VoiceLLMChatBackend:
             time.sleep(0.1)
             wait_time += 0.1
         if self.is_model_working:
-             print("Warning: Model worker still appears busy after interruption signal.")
+            self._print_logs("Warning: Model worker still appears busy after interruption signal.")
 
-        print("Clearing TTS and display queues...")
+        self._print_logs("Clearing TTS and display queues...")
         self._clear_queue(self.tts_queue)
         self._clear_queue(self.display_queue)
 
         self.display_queue.put(None) # Signal interruption to frontend
-        print("Response interruption complete.")
+        self._print_logs("Response interruption complete.")
 
     def send_prompt(self, prompt: str):
         """Adds a user prompt to the queue. Interrupts current response."""
@@ -754,23 +759,23 @@ class VoiceLLMChatBackend:
                  self.interrupt_response()
                  time.sleep(0.1)
 
-            print(f"Sending prompt to model worker queue: '{trimmed_prompt[:50]}...'")
+            self._print_logs(f"Sending prompt to model worker queue: '{trimmed_prompt[:50]}...'")
             self.prompt_queue.put(trimmed_prompt)
         else:
-            print("Attempted to send an empty or invalid prompt.")
+            self._print_logs("Attempted to send an empty or invalid prompt.")
 
     def get_completed_data_chunk(self, timeout: float = 0.1) -> Optional[tuple[str, str]]:
         """Retrieves a completed sentence and audio chunk for display."""
         try:
             item = self.display_queue.get(timeout=timeout)
             if item is None:
-                 print("Received None signal from display queue.")
-                 return None
+                self._print_logs("Received None signal from display queue.")
+                return None
             return item
         except queue.Empty:
             return ("", "")
         except Exception as e:
-            print(f"Error getting data chunk from display queue: {e}")
+            self._print_logs(f"Error getting data chunk from display queue: {e}")
             return None
 
     def get_last_response(self) -> Optional[str]:
@@ -794,7 +799,7 @@ class VoiceLLMChatBackend:
 
         # Interrupt ongoing response before clearing chat
         if self.is_model_working or not self.tts_queue.empty() or not self.display_queue.empty():
-            print("Interrupting ongoing response before starting new chat.")
+            self._print_logs("Interrupting ongoing response before starting new chat.")
             self.interrupt_response()
             time.sleep(0.1)
 
@@ -803,7 +808,7 @@ class VoiceLLMChatBackend:
              self.chat_messages.clear()
              self.chat_messages.append({"role": "system", "content": self.system_message})
 
-        print("New chat started. History cleared.")
+        self._print_logs("New chat started. History cleared.")
 
     def _update_chat_history(self, role: str, message: str):
         """Adds a message to the chat history thread-safely."""
@@ -811,7 +816,7 @@ class VoiceLLMChatBackend:
             with self.lock:
                 self.chat_messages.append({"role": role, "content": message})
         else:
-            print(f"Attempted to add invalid message to history. Role: {role}, Message: {message}")
+            self._print_logs(f"Attempted to add invalid message to history. Role: {role}, Message: {message}")
 
     def _clear_queue(self, q: queue.Queue):
         """Clears all items from a queue."""
@@ -821,7 +826,7 @@ class VoiceLLMChatBackend:
             except queue.Empty:
                 pass
             except Exception as e:
-                print(f"Error clearing queue {q}: {e}")
+                self._print_logs(f"Error clearing queue {q}: {e}")
 
     def _prepare_model_inputs(self) -> Optional[Dict[str, torch.Tensor]]:
         """Prepares model inputs from chat history."""
@@ -831,22 +836,22 @@ class VoiceLLMChatBackend:
         try:
             # Apply chat template and tokenize
             text = self.tokenizer.apply_chat_template(self.chat_messages, tokenize=False, add_generation_prompt=True)
-            print(f"Prepared prompt text: {text[:100]}...")
+            self._print_logs(f"Prepared prompt text: {text[:100]}...")
             model_inputs = self.tokenizer([text], return_tensors="pt")
-            print("Model inputs tokenized.")
+            self._print_logs("Model inputs tokenized.")
 
             # Move inputs to GPU if available
             if torch.cuda.is_available():
                 try:
                     model_inputs = {k: v.to("cuda") for k, v in model_inputs.items()}
-                    print("Model inputs moved to GPU.")
+                    self._print_logs("Model inputs moved to GPU.")
                 except Exception as e:
-                    print(f"Warning: Could not move model inputs to GPU: {e}. Using CPU instead.")
+                    self._print_logs(f"Warning: Could not move model inputs to GPU: {e}. Using CPU instead.")
 
             return model_inputs
 
         except Exception as e:
-            print(f"Error preparing model inputs: {e}")
+            self._print_logs(f"Error preparing model inputs: {e}")
             self._update_chat_history("assistant", f"Error preparing prompt: {e}")
             self._signal_response_end(interrupted=True)
             return None
@@ -854,19 +859,20 @@ class VoiceLLMChatBackend:
     def _signal_response_end(self, interrupted: bool = False):
         """Signals end of response stream to TTS processor."""
         self.tts_queue.put({"data": None, "interrupted": interrupted})
-        print(f"Signal end of response stream to tts_queue (interrupted={interrupted}).")
+        self._print_logs(f"Signal end of response stream to tts_queue (interrupted={interrupted}).")
 
     def _model_worker(self):
         """Background thread processing prompts and streaming LLM output."""
-        print("Model worker started.")
+        self._print_logs("Model worker started.")
+
         while self.is_running:
             try:
                 prompt = self.prompt_queue.get(timeout=1.0)
                 if prompt is None:
-                    print("Model worker received shutdown signal.")
+                    self._print_logs("Model worker received shutdown signal.")
                     break
 
-                print(f"Model worker processing prompt: '{prompt[:50]}...'")
+                self._print_logs(f"Model worker processing prompt: '{prompt[:50]}...'")
                 self._update_chat_history("user", prompt)
 
                 self.stop_event.clear()
@@ -880,7 +886,7 @@ class VoiceLLMChatBackend:
 
                 model_inputs = self._prepare_model_inputs()
                 if model_inputs is None:
-                    print("Model input preparation failed. Skipping prompt processing.")
+                    self._print_logs("Model input preparation failed. Skipping prompt processing.")
                     continue
 
                 generation_kwargs = {
@@ -907,85 +913,85 @@ class VoiceLLMChatBackend:
                 self._process_stream(streamer)
 
                 model_thread.join()
-                print("Model generation thread joined.")
+                self._print_logs("Model generation thread joined.")
 
                 with self.lock:
                     self.active_streamer = None
                 self.is_model_working = False
 
-                print("Model worker finished processing prompt.")
+                self._print_logs("Model worker finished processing prompt.")
 
             except queue.Empty:
                 continue
             except Exception as e:
-                print(f"Critical error in model worker loop: {e}")
+                self._print_logs(f"Critical error in model worker loop: {e}")
                 self.is_model_working = False
                 self.stop_event.set()
                 self._signal_response_end(interrupted=True)
                 time.sleep(1)
                 continue
 
-        print("Model worker stopped.")
+        self._print_logs("Model worker stopped.")
 
     def _generate_response(self, input_ids_sizes: List[int], generation_kwargs: Dict):
         """Generates LLM response and updates chat history."""
-        print("Starting LLM generation...")
+        self._print_logs("Starting LLM generation...")
         try:
             all_generated_ids = self.llm_model.generate(**generation_kwargs)
-            print("LLM generation finished.")
+            self._print_logs("LLM generation finished.")
 
             # Calculate context load
             if all_generated_ids is not None and len(all_generated_ids) > 0 and all_generated_ids[0] is not None and len(all_generated_ids[0]) > 0:
-                 with self.lock:
-                     self.context_load = len(all_generated_ids[0])
-                 print(f"Context load updated: {self.context_load} tokens.")
+                with self.lock:
+                    self.context_load = len(all_generated_ids[0])
+                self._print_logs(f"Context load updated: {self.context_load} tokens.")
             else:
-                 with self.lock:
-                     self.context_load = sum(input_ids_sizes) if input_ids_sizes else 0
-                 print(f"Context load updated (no new tokens generated): {self.context_load} tokens.")
+                with self.lock:
+                    self.context_load = sum(input_ids_sizes) if input_ids_sizes else 0
+                self._print_logs(f"Context load updated (no new tokens generated): {self.context_load} tokens.")
 
             # Extract newly generated tokens
             generated_ids = []
             if all_generated_ids is not None and len(all_generated_ids) > 0 and input_ids_sizes and len(input_ids_sizes) > 0:
                 for size, output_ids in zip(input_ids_sizes, all_generated_ids):
                     if output_ids is not None and size is not None and len(output_ids) > size:
-                         generated_ids.append(output_ids[size:])
+                        generated_ids.append(output_ids[size:])
                     elif output_ids is not None and size is not None and len(output_ids) <= size:
-                         print("Warning: Output sequence length <= input sequence length. No new tokens generated?")
+                        self._print_logs("Warning: Output sequence length <= input sequence length. No new tokens generated?")
                     elif output_ids is None or size is None:
-                         print("Warning: Invalid output_ids or input_ids_size encountered during token extraction.")
+                        self._print_logs("Warning: Invalid output_ids or input_ids_size encountered during token extraction.")
 
             # Decode generated tokens
             response = ""
             if generated_ids and generated_ids[0] is not None and len(generated_ids[0]) > 0:
-                 response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+                response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
             else:
-                 print("No new tokens generated or decoding resulted in an empty string.")
+                self._print_logs("No new tokens generated or decoding resulted in an empty string.")
 
             # Update chat history with full response
             if response:
-                 self._update_chat_history("assistant", response)
-                 print("Assistant's full response added to chat history.")
+                self._update_chat_history("assistant", response)
+                self._print_logs("Assistant's full response added to chat history.")
             else:
-                 self._update_chat_history("assistant", "")
-                 print("No assistant response generated to add to history.")
+                self._update_chat_history("assistant", "")
+                self._print_logs("No assistant response generated to add to history.")
 
         except Exception as e:
-            print(f"Error during LLM generation in _generate_response: {e}")
             error_message = f"An error occurred during response generation: {e}"
+            self._print_logs(f"Error during LLM generation in _generate_response: {e}")
+            self._print_logs(error_message)
             self._update_chat_history("assistant", error_message)
-            print(error_message)
             self.stop_event.set()
             self._signal_response_end(interrupted=True)
 
     def _process_stream(self, streamer: TextIteratorStreamer):
         """Processes streamed tokens into TTS chunks."""
-        print("Starting stream processing...")
+        self._print_logs("Starting stream processing...")
         tts = TTSBuffer(max_tokens=12, locale=self.locale)
         try:
             for token_text in streamer:
                 if self.stop_event.is_set():
-                    print("Stream processing interrupted by stop event.")
+                    self._print_logs("Stream processing interrupted by stop event.")
                     self.tts_queue.queue.clear()
                     self.tts_queue.put({"data":None, "interrupted":True})
                     break
@@ -996,22 +1002,22 @@ class VoiceLLMChatBackend:
                 item = tts.add_token(token_text)
                 if item is not None:
                     display_sentence, tts_sentence = item
-                    print(f"Putting chunk to tts_queue: '{tts_sentence[:50]}...'")
+                    self._print_logs(f"Putting chunk to tts_queue: '{tts_sentence[:50]}...'")
                     self.tts_queue.put({"data":(display_sentence,tts_sentence)})
 
             if not self.stop_event.is_set():
-                print("Stream processing finished. Flushing remaining buffer.")
+                self._print_logs("Stream processing finished. Flushing remaining buffer.")
                 item = tts.flush()
                 if item is not None:
                     display_sentence, tts_sentence = item
-                    print(f"Putting flushed chunk to tts_queue: '{tts_sentence[:50]}...'")
+                    self._print_logs(f"Putting flushed chunk to tts_queue: '{tts_sentence[:50]}...'")
                     self.tts_queue.put({"data":(display_sentence,tts_sentence)})
 
-                print("Signaling end of stream to tts_queue.")
+                self._print_logs("Signaling end of stream to tts_queue.")
                 self.tts_queue.put({"data":None, "interrupted":False})
 
         except Exception as e:
-            print(f"Error processing stream: {e}")
+            self._print_logs(f"Error processing stream: {e}")
             self.stop_event.set()
             self.tts_queue.queue.clear()
             self.tts_queue.put({"data":None, "interrupted":True})
@@ -1023,19 +1029,19 @@ class VoiceLLMChatBackend:
 
         audio_chunks_int16 = []
         try:
-            print(f"Synthesizing audio for: '{tts_sentence[:50]}...'")
+            self._print_logs(f"Synthesizing audio for: '{tts_sentence[:50]}...'")
             for chunk in self.piper_voice.synthesize(tts_sentence):
                 if hasattr(chunk, 'audio_int16_array') and chunk.audio_int16_array is not None:
                     audio_chunks_int16.append(chunk.audio_int16_array)
                 else:
-                    print(f"Warning: Received unexpected audio chunk format from Piper during synthesis.")
+                    self._print_logs(f"Warning: Received unexpected audio chunk format from Piper during synthesis.")
 
             if not audio_chunks_int16:
-                 print(f"Warning: Piper synthesis returned no audio data for chunk: '{tts_sentence[:50]}...'")
-                 return ""
+                self._print_logs(f"Warning: Piper synthesis returned no audio data for chunk: '{tts_sentence[:50]}...'")
+                return ""
 
             concatenated_audio = np.concatenate(audio_chunks_int16)
-            print(f"Synthesized {len(concatenated_audio)} samples.")
+            self._print_logs(f"Synthesized {len(concatenated_audio)} samples.")
 
             # Convert to WAV
             byte_io = io.BytesIO()
@@ -1048,18 +1054,18 @@ class VoiceLLMChatBackend:
             return encoded_audio
 
         except Exception as e:
-            print(f"Error during Piper synthesis or WAV encoding: {e}")
+            self._print_logs(f"Error during Piper synthesis or WAV encoding: {e}")
             return None
 
     def _tts_processor(self):
         """Background thread synthesizing audio chunks and queuing for display."""
-        print("TTS processor started.")
+        self._print_logs("TTS processor started.")
         while self.is_running:
             try:
                 recorded_item = self.tts_queue.get(timeout=1.0)
 
                 if recorded_item is None or recorded_item.get("data") is None:
-                    print("TTS processor received end of stream or interruption signal.")
+                    self._print_logs("TTS processor received end of stream or interruption signal.")
                     self.display_queue.put(None)
                     continue
 
@@ -1067,21 +1073,21 @@ class VoiceLLMChatBackend:
                 encoded_audio = self._synthesize_audio(tts_sentence)
 
                 if encoded_audio is not None:
-                    print(f"Putting text and audio chunk to display queue.")
+                    self._print_logs(f"Putting text and audio chunk to display queue.")
                     self.display_queue.put((display_sentence, encoded_audio))
                 else:
-                    print(f"TTS synthesis failed for chunk, sending text only: '{display_sentence}'")
+                    self._print_logs(f"TTS synthesis failed for chunk, sending text only: '{display_sentence}'")
                     self.display_queue.put((display_sentence, ""))
 
             except queue.Empty:
                 pass
             except Exception as e:
-                print(f"Critical error in TTS processor loop: {e}")
+                self._print_logs(f"Critical error in TTS processor loop: {e}")
                 self.display_queue.put(None)
                 time.sleep(1)
                 continue
 
-        print("TTS processor stopped.")
+        self._print_logs("TTS processor stopped.")
 
     def _decode_audio(self, data: str) -> Optional[bytes]:
         """Decodes base64 audio and prepares it for VOSK using ffmpeg."""
@@ -1105,8 +1111,8 @@ class VoiceLLMChatBackend:
                 output, err = process.communicate(input=binary)
                 return output
         else:
-             print("Invalid or non-base64 WAV data URL provided for decoding.")
-             return None
+            self._print_logs("Invalid or non-base64 WAV data URL provided for decoding.")
+            return None
 
     def transcribe(self, data: str) -> str:
         """Transcribes base64 audio data using VOSK."""
@@ -1120,12 +1126,12 @@ class VoiceLLMChatBackend:
                 recognized_text = result.get("text", "")
                 if recognized_text:
                     transcription = recognized_text.capitalize()
-                    print(f"Transcription successful: '{transcription}'")
+                    self._print_logs(f"Transcription successful: '{transcription}'")
 
             except Exception as e:
-                print(f"Error during VOSK transcription: {e}")
+                self._print_logs(f"Error during VOSK transcription: {e}")
 
         else:
-             print("Audio data could not be decoded for transcription.")
+            self._print_logs("Audio data could not be decoded for transcription.")
 
         return transcription
