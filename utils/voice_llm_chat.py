@@ -574,10 +574,12 @@ class TTSBuffer:
         return self._pop_buffer(len(self.buffer))
     
     def _compile_abbreviations(self, language = "en"):
+        """Compile the regular expression pattern for abbreviations."""
         self.abbrev_pattern = re.compile(r'(?<!\w)(' + '|'.join(re.escape(k) for k in abbreviations.get(language, abbreviations["en"]).keys()) + r')(?!\w)', re.I)
         self.chosen_abbreviations = abbreviations.get(language, abbreviations["en"])
     
     def _replace_common_abbreviations(self, text):
+        """Replace common abbreviations with their expanded form."""
         @lru_cache(maxsize=1024)
         def expand_abbrev_cached(abbrev):
             # Try all casing variants to find a match
@@ -601,7 +603,7 @@ class TTSBuffer:
         # Remove common markdown formatting
         phrase_for_tts = phrase_for_tts.replace("*", "").replace("_", "").replace("#", "").replace('"', '')
 
-        # Replacement of english abbrev with their expansions
+        # Replacement of common abbreviations with their expansions
         phrase_for_tts = self._replace_common_abbreviations(phrase_for_tts)
         return (phrase_to_display, phrase_for_tts)
 
@@ -644,7 +646,7 @@ class VoiceLLMChatBackend:
 
 
     def set_model_parameters(self, temperature=0.1, max_tokens = 256, top_k = 100, top_p = 1, locale="en"):
-        """Sets model parameters for generation."""
+        """Sets llm model parameters for generation."""
         self.model_temperature = temperature
         self.model_top_k = top_k
         self.model_top_p = top_p
@@ -654,6 +656,7 @@ class VoiceLLMChatBackend:
         # self.model_max_new_tokens = max_new_tokens
 
     def set_system_message(self, system_message):
+        """Sets the system message for the chat."""
         self.system_message = system_message
 
     def start(self):
@@ -915,7 +918,6 @@ class VoiceLLMChatBackend:
             except queue.Empty:
                 continue
             except Exception as e:
-                self.display_queue.put((f"Critical error in model worker loop: {e}", ""))
                 print(f"Critical error in model worker loop: {e}")
                 self.is_model_working = False
                 self.stop_event.set()
@@ -1035,6 +1037,7 @@ class VoiceLLMChatBackend:
             concatenated_audio = np.concatenate(audio_chunks_int16)
             print(f"Synthesized {len(concatenated_audio)} samples.")
 
+            # Convert to WAV
             byte_io = io.BytesIO()
             write(byte_io, self.piper_voice.config.sample_rate, concatenated_audio)
             output_wav = byte_io.getvalue()
