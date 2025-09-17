@@ -20,7 +20,6 @@ abbreviations = {"pl": {
     "cd.": "ciąg dalszy",
     "ww.": "wyżej wymieniony",
     "jw.": "jak wyżej",
-    "ok.": "około",
     "br.": "bieżącego roku",
     "ub. r.": "ubiegłego roku",
     "p.n.e.": "przed naszą erą",
@@ -48,8 +47,6 @@ abbreviations = {"pl": {
     "płk": "pułkownik",
     "gen.": "generał",
     "ks.": "ksiądz",
-    "bp": "biskup",
-    "abp": "arcybiskup",
     "św.": "świętego",
     "bł.": "błogosławionego",
     "dyr.": "dyrektor",
@@ -57,19 +54,17 @@ abbreviations = {"pl": {
     "s.a.": "spółka akcyjna",
     "sp. z o.o.": "spółka zoo",
 	"sp.": "spółka",
+    "z o.o.": "zo",
 
     # --- Jednostki miar i wielkości ---
     "zł": "złotych",
     "gr": "groszy",
     "kg": "kilogram",
     "dag": "dekagram",
-    "g": "gram",
-    "t": "tona",
     "km": "kilometr",
     "m": "metr",
     "cm": "centymetr",
     "mm": "milimetr",
-    "l": "litr",
     "ml": "mililitr",
     "ha": "hektar",
     "a": "ar",
@@ -79,8 +74,6 @@ abbreviations = {"pl": {
     "proc.": "procent",
     "°C": "stopni Celsjusza",
     "V": "wolt",
-    "W": "wat",
-    "A": "amper",
     "km/h": "kilometrów na godzinę",
     "hPa": "hektopaskali",
     "kcal": "kilokalorii",
@@ -197,10 +190,8 @@ abbreviations = {"pl": {
     "krk": "kraków",
     "wro": "wrocław",
     "priv": "prywatna wiadomość",
-    "gg": "gie gie",
     "tbh": "szczerze powiedziawszy",
     "imho": "moim skromnym zdaniem",
-    "k": "okej",
     "nvm": "nieważne",
     "idk": "nie wiem",
     "jj": "już jestem",
@@ -211,17 +202,12 @@ abbreviations = {"pl": {
 
     # --- Adresy i oznaczenia prawne (z kropką i bez) ---
     "ul.": "ulica",
-    "ul": "ulica",
     "al.": "aleja",
     "al": "aleja",
     "os.": "osiedle",
-    "os": "osiedle",
     "pl.": "plac",
-    "pl": "plac",
     "woj.": "województwo",
-    "woj": "województwo",
     "pow.": "powiat",
-    "pow": "powiat",
     "gm.": "gmina",
     "gm": "gmina",
     "płn.": "północny",
@@ -241,6 +227,19 @@ abbreviations = {"pl": {
     "s.": "strona",
     "str.": "strona",
     "t.": "tom",
+
+    # --- Wyliczanie ---
+    "1.": "Po pierwsze.",
+    "2.": "Po drugie.",
+    "3.": "Po trzecie.",
+    "4.": "Po czwarte.",
+    "5.": "Po piąte.",
+    "6.": "Po szóste.",
+    "7.": "Po siódme.",
+    "8.": "Po ósme.",
+    "9.": "Po dziewiąte.",
+    "10.": "Po dziesiąte.",
+
 },
 "en":{
     # Common General Abbreviations
@@ -434,7 +433,6 @@ abbreviations = {"pl": {
     # Punctuation/Symbols (how they might be read)
     "&": "and",
     "@": "at",
-    "#": "hashtag", # or "number" depending on context
     "$$$": "dollars", # or "money"
     "w/": "with",
     "w/o": "without",
