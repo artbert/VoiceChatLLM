@@ -634,6 +634,8 @@ class VoiceLLMChatBackend:
         self.context_load = 0
         self.system_message = "You are a helpful voice assistant who responds in one or two short sentences. Respond without any formatting."
         self.should_print_logs = False
+        # The maximum number of words that can be processed by TTS at once
+        self.tts_max_words = 20
 
         # Background threads
         self.model_processing_thread = None
@@ -987,7 +989,7 @@ class VoiceLLMChatBackend:
     def _process_stream(self, streamer: TextIteratorStreamer):
         """Processes streamed tokens into TTS chunks."""
         self._print_logs("Starting stream processing...")
-        tts = TTSBuffer(max_tokens=12, locale=self.locale)
+        tts = TTSBuffer(max_tokens=self.tts_max_words, locale=self.locale)
         try:
             for token_text in streamer:
                 if self.stop_event.is_set():
