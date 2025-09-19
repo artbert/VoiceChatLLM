@@ -148,6 +148,7 @@ abbreviations = {"pl": {
     "RTV": "er te fau",
     "PC": "pe cet",
     "IT": "aj ti",
+    "AI": "ejaj",
     "WWW": "wu wu wu",
     "SMS": "es em es",
     "MMS": "em em es",
@@ -182,6 +183,8 @@ abbreviations = {"pl": {
     "LCD": "el si di",
     "UFO": "ufo",
     "SOR": "sor",
+    "R&D": "arendi",
+    "venture capital": "wenczer kapital",
 
     # --- Mowa potoczna, slang, skróty z komunikatorów ---
     "thx": "dzięki",
