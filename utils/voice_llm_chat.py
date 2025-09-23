@@ -179,6 +179,7 @@ abbreviations = {"pl": {
     "SOR": "sor",
     "R&D": "arendi",
     "venture capital": "wenczer kapital",
+    "science fiction": "sajens fikszyn",
 
     # --- Mowa potoczna, slang, skróty z komunikatorów ---
     "thx": "dzięki",
@@ -500,6 +501,8 @@ abbreviations = {"pl": {
 
 }}
 
+non_standard_chars = {"pl": "[^A-Za-z0-9 ,.:;?!ąćęłńóśźżĄĆĘŁŃÓŚŹŻ-–]+", "en": "[^A-Za-z0-9 ,.:;?!-–]+"}
+
 # Custom stopping criteria using Event
 class CustomStopCriteria(StoppingCriteria):
     def __init__(self,stop_event: threading.Event):
@@ -529,8 +532,13 @@ class TTSBuffer:
             "and", "but", "or", "nor", "for", "yet", "so"
         }
         self.abbrev_pattern = None
+        self.non_standard_chars_pattern = None
         self.chosen_abbreviations = None
         self._compile_abbreviations(locale)
+
+    def _is_string_in_keys(self,token: str) -> bool:
+        """Check if the token is in the chosen abbreviations."""
+        return any(token in key for key in self.chosen_abbreviations.keys())
 
     def add_token(self, token: str) -> Optional[tuple[str, str]]:
         """Add a token and return a chunk if a flush condition is met."""
@@ -539,8 +547,12 @@ class TTSBuffer:
         stripped_token = token.strip()
 
         # Flush on sentence terminator if min_tokens reached.
-        if stripped_token.endswith(('.', '?', '!')) and idx >= self.min_tokens:
-            return self._pop_buffer(idx)
+        if idx >= self.min_tokens:
+            if stripped_token.endswith(('?', '!')):
+                return self._pop_buffer(idx)
+            # Make sure that dot is not part of abbreviation
+            elif stripped_token.endswith(('.')) and not self._is_string_in_keys(stripped_token):
+                return self._pop_buffer(idx)
 
         # Mark potential boundary: comma or conjunction.
         low = stripped_token.rstrip(',:;').lower()
@@ -564,15 +576,16 @@ class TTSBuffer:
             return None
         return self._pop_buffer(len(self.buffer))
     
-    def _compile_abbreviations(self, language = "en"):
+    def _compile_abbreviations(self, language: str = "en"):
         """Compile the regular expression pattern for abbreviations."""
         self.abbrev_pattern = re.compile(r'(?<!\w)(' + '|'.join(re.escape(k) for k in abbreviations.get(language, abbreviations["en"]).keys()) + r')(?!\w)', re.I)
         self.chosen_abbreviations = abbreviations.get(language, abbreviations["en"])
+        self.non_standard_chars_pattern = re.compile(non_standard_chars.get(language, non_standard_chars["en"]))
     
-    def _replace_common_abbreviations(self, text):
+    def _replace_common_abbreviations(self, text: str) -> str:
         """Replace common abbreviations with their expanded form."""
         @lru_cache(maxsize=1024)
-        def expand_abbrev_cached(abbrev):
+        def expand_abbrev_cached(abbrev: str) -> str:
             # Try all casing variants to find a match
             for variant in (abbrev, abbrev.lower(), abbrev.upper(), abbrev.capitalize()):
                 if variant in self.chosen_abbreviations:
@@ -580,6 +593,10 @@ class TTSBuffer:
             return abbrev  # If no match, return original
 
         return self.abbrev_pattern.sub(lambda m: expand_abbrev_cached(m.group(1)), text)
+
+    def _replace_non_standard_chars(self, text: str) -> str:
+        """Replace the non-standard characters with a space."""
+        return self.non_standard_chars_pattern.sub(' ', text)
 
     def _pop_buffer(self, n: int) -> tuple[str, str]:
         """Remove first n tokens and join into display/tts chunks."""
@@ -591,8 +608,11 @@ class TTSBuffer:
 
         phrase_to_display = "".join(chunk_tokens)
         phrase_for_tts = phrase_to_display.strip()
-        # Remove common markdown formatting
-        phrase_for_tts = phrase_for_tts.replace("*", "").replace("_", "").replace("#", "").replace('"', '')
+
+        # This is to improve the pronunciation of the Piper generator.
+        phrase_for_tts = phrase_for_tts.replace("(", " – ").replace(")", " – ")
+        # Replace non-standard chars with space.
+        phrase_for_tts = self._replace_non_standard_chars(phrase_for_tts)
 
         # Replacement of common abbreviations with their expansions
         phrase_for_tts = self._replace_common_abbreviations(phrase_for_tts)
