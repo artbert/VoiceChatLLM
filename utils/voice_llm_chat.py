@@ -502,7 +502,7 @@ abbreviations = {"pl": {
 
 }}
 
-non_standard_chars = {"pl": "[^A-Za-z0-9 ,.:;?!ąćęłńóśźżĄĆĘŁŃÓŚŹŻ-–]+", "en": "[^A-Za-z0-9 ,.:;?!-–&@$/]+"}
+non_standard_chars = {"pl": "[^A-Za-z0-9 ,.:;?!ąćęłńóśźżĄĆĘŁŃÓŚŹŻ-–%]+", "en": "[^A-Za-z0-9 ,.:;?!-–&@$/%]+"}
 
 # Custom stopping criteria using Event
 class CustomStopCriteria(StoppingCriteria):
