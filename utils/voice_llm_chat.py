@@ -180,6 +180,7 @@ abbreviations = {"pl": {
     "R&D": "arendi",
     "venture capital": "wenczer kapital",
     "science fiction": "sajens fikszyn",
+    "wow": "łał",
 
     # --- Mowa potoczna, slang, skróty z komunikatorów ---
     "thx": "dzięki",
@@ -501,7 +502,7 @@ abbreviations = {"pl": {
 
 }}
 
-non_standard_chars = {"pl": "[^A-Za-z0-9 ,.:;?!ąćęłńóśźżĄĆĘŁŃÓŚŹŻ-–]+", "en": "[^A-Za-z0-9 ,.:;?!-–]+"}
+non_standard_chars = {"pl": "[^A-Za-z0-9 ,.:;?!ąćęłńóśźżĄĆĘŁŃÓŚŹŻ-–]+", "en": "[^A-Za-z0-9 ,.:;?!-–&@$/]+"}
 
 # Custom stopping criteria using Event
 class CustomStopCriteria(StoppingCriteria):
@@ -538,6 +539,7 @@ class TTSBuffer:
 
     def _is_string_in_keys(self,token: str) -> bool:
         """Check if the token is in the chosen abbreviations."""
+        token = self._replace_non_standard_chars(token, '')
         return any(token in key for key in self.chosen_abbreviations.keys())
 
     def add_token(self, token: str) -> Optional[tuple[str, str]]:
@@ -594,9 +596,9 @@ class TTSBuffer:
 
         return self.abbrev_pattern.sub(lambda m: expand_abbrev_cached(m.group(1)), text)
 
-    def _replace_non_standard_chars(self, text: str) -> str:
+    def _replace_non_standard_chars(self, text: str, newValue: str = ' ') -> str:
         """Replace the non-standard characters with a space."""
-        return self.non_standard_chars_pattern.sub(' ', text)
+        return self.non_standard_chars_pattern.sub(newValue, text)
 
     def _pop_buffer(self, n: int) -> tuple[str, str]:
         """Remove first n tokens and join into display/tts chunks."""
