@@ -2,13 +2,13 @@
 
 **A proof-of-concept chat application powered by a language model (LLM) with voice-based interaction. Users can speak to the model and receive spoken responses.**
 
----
+
 
 ## 📌 Overview
 
 VoiceChatLLM explores the fusion of natural language processing and voice interaction. It enables users to engage in spoken conversations with a language model, receiving both textual and spoken replies. The project is designed to be modular and extensible, with initial implementations provided via Jupyter Notebooks on Google Colab.
 
----
+
 
 ## 🧠 Features
 
@@ -18,7 +18,7 @@ VoiceChatLLM explores the fusion of natural language processing and voice intera
 - 🖥️ Upcoming support for local desktop applications
 - ⚙️ All configuration and usage instructions embedded directly in notebooks
 
----
+
 
 ## 🚀 Getting Started
 
@@ -36,7 +36,7 @@ To launch the application:
 
 We are actively developing standalone versions of VoiceChatLLM that will run locally on your machine. Stay tuned for updates!
 
----
+
 
 ## 📂 Project Structure
 
@@ -63,7 +63,7 @@ VoiceChatLLM/
 | `Voice_LLM_Chat_Colab.ipynb` | English | ❌ No | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/artbert/VoiceChatLLM/blob/main/Voice_LLM_Chat_Colab.ipynb) |
 | `Voice_Chat_With_Bielik_Colab.ipynb` | Polish | ✅ Yes | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/artbert/VoiceChatLLM/blob/main/Voice_Chat_With_Bielik_Colab.ipynb) |
 
----
+
 
 ## ⚙️ Requirements
 
@@ -73,25 +73,25 @@ VoiceChatLLM/
   - Google Colab: GPU optional (depending on notebook)
   - Local: Microphone required for voice interaction testing
 
----
+
 
 ## 📣 Contributing
 
 Contributions are welcome! Feel free to fork the repo, submit issues, or open pull requests to improve functionality or add new features.
 
----
+
 
 ## 📄 License
 
 This project is released under the [MIT License](LICENSE).
 
----
+
 
 ## 🙋‍♂️ Contact
 
 For questions, suggestions, or collaboration inquiries, please open an issue or reach out via GitHub.
 
----
+
 
 ## ✨ Acknowledgments
 
