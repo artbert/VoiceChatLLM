@@ -36,6 +36,56 @@ To launch the application:
 
 We are actively developing standalone versions of VoiceChatLLM that will run locally on your machine. Stay tuned for updates!
 
+### 🛠️ Local Setup Instructions (For testing purposes only)
+
+To run VoiceChatLLM locally, follow these steps:
+
+#### ✅ 1. Clone the Repository
+
+```bash
+git clone https://github.com/artbert/VoiceChatLLM.git
+cd VoiceChatLLM
+```
+
+
+#### ✅ 2. Create a Virtual Environment (Recommended)
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+
+
+#### ✅ 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+
+
+#### ✅ 4. Run the Local Test Notebook
+
+Launch the notebook to test microphone input, Text-to-Speech (TTS), and Speech-to-Text (STT):
+
+```bash
+jupyter notebook voice_interaction_test_app_local.ipynb
+```
+
+
+
+#### 🎤 Hardware Requirements
+
+- A working **microphone**
+- Speakers or headphones for audio output
+
+
+
+#### ⚠️ Notes
+- GPU is **not required** for basic voice interaction, but may be needed for advanced models like Bielik.
+- The notebook is a work in progress, and features may be added in the future.
+
 
 
 ## 📂 Project Structure
@@ -54,7 +104,7 @@ VoiceChatLLM/
 └── requirements.txt                         # Python dependencies for local execution (if applicable)
 ```
 
----
+
 
 ## 🔗 Launch Notebooks on Google Colab
 
@@ -67,7 +117,7 @@ VoiceChatLLM/
 
 ## ⚙️ Requirements
 
-- **Python**: 3.8+
+- **Python**: 3.12+
 - **Libraries**: Listed in `requirements.txt` (for local use)
 - **Hardware**:
   - Google Colab: GPU optional (depending on notebook)
