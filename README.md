@@ -74,6 +74,15 @@ jupyter notebook voice_interaction_test_app_local.ipynb
 ```
 
 
+#### ✅ 5. Run the Local Version of Voice LLM Chat
+
+Launch the notebook to run the local version of Voice LLM Chat:
+
+```bash
+jupyter notebook Voice_LLM_Chat_Local.ipynb
+```
+
+
 
 #### 🎤 Hardware Requirements
 
@@ -93,6 +102,7 @@ jupyter notebook voice_interaction_test_app_local.ipynb
 ```plaintext
 VoiceChatLLM/
 ├── Voice_LLM_Chat_Colab.ipynb               # Colab notebook using an English-language model (no GPU required)
+├── Voice_LLM_Chat_Local.ipynb               # Local notebook using an English-language model (no GPU required)
 ├── Voice_Chat_With_Bielik_Colab.ipynb       # Colab notebook using a Polish-language model (GPU required)
 ├── voice_interaction_test_app_local.ipynb   # Local notebook for testing TTS, STT, and microphone input/output
 ├── utils/                                   # Python modules supporting voice interaction and LLM logic
